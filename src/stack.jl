@@ -1,3 +1,22 @@
+#---Stacking functions-----------------------------------------------------------------------------#
+"""
+    ImageStacking.stack!(
+        output::AbstractMatrix,
+        block::ImageStacking.StackBlock,
+        r::RejectionMethod,
+        [coeffs::NormalizationCoefficients,]
+        [op::Union{typeof(+),typeof(*)}]
+    )
+
+Stacks the data in `block` and writes the results to `output`.
+The region indices of `block` must be contained within `output`; it will not be resized to
+accomodate data which may be out of bounds.
+Data in `block` may be modified depending on the choice of rejection method.
+
+If normalization coefficients and a choice of normalization method (either `+` for additive or `*`
+for multiplicative) are provided, then normalization will be applied to the images before they are
+stacked.
+"""
 function stack!(
     output::AbstractMatrix,
     block::StackBlock,
@@ -7,6 +26,17 @@ function stack!(
 )
     for (i,p) in zip(CartesianIndices(block.region), eachpixel(block))
         output[i] = pixel_stack!(p, r, coeffs, op)
+    end
+    return output
+end
+
+function stack!(
+    output::AbstractMatrix,
+    block::StackBlock,
+    r::RejectionMethod
+)
+    for (i,p) in zip(CartesianIndices(block.region), eachpixel(block))
+        output[i] = pixel_stack!(p, r)
     end
     return output
 end

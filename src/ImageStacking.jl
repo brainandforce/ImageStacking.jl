@@ -17,6 +17,7 @@ export MedianMADEstimator, IKSSEstimator, LocationOnly, MedianEstimator
 include("rejection.jl")
 export rejections, accepted
 export NoRejection,SigmaClipping, MADClipping, WinsorizedSigmaClipping
+include("stack.jl")
 
 #---Stack images with statistics-------------------------------------------------------------------#
 

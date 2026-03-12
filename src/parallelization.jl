@@ -75,15 +75,32 @@ function Base.summary(io::IO, sb::StackBlock)
 end
 
 #---Break down images into blocks for stacking-----------------------------------------------------#
+
+function _insufficient_memory_error(memory_needed, working_memory, memory_fraction)
+    @error LazyString(
+        "Not enough memory is available to construct blocks for the whole image.",
+        "\nTotal memory required: ", memory_needed >>> 20, " MiB",
+        "\nTotal memory available: ", working_memory >>> 20, " MiB",
+        "\nHave you tried increasing memory_fraction (currently ", memory_fraction, "?)"
+    )
+    throw(OutOfMemoryError())
+end
+
 """
     create_blocks(
         T,
         image_size,
         image_count,
-        memory_fraction,
+        [memory_fraction = 0.5],
         [nthreads = Threads.nthreads(:default),]
         [free_memory = Sys.free_memory]
-    )
+    ) -> Vector{StackBlock{T}}
+
+Creates a vector of uninitialized `StackBlock` objects that can hold the desired number of images of
+the given size and data type.
+The number of blocks depends on the number of threads desired, which can be determined automatically
+or manually specified.
+The `memory_fraction` parameter determines how much of the available memory
 """
 function create_blocks(
     ::Type{T},
@@ -93,12 +110,9 @@ function create_blocks(
     nthreads = Threads.nthreads(:default),
     free_memory = Sys.free_memory()
 ) where T<:Real
-    memory_needed = sizeof(T) * prod(image_dims) * (image_count + 1)
+    # Pad memory requirements to account for the destination image and
+    memory_needed = sizeof(T) * prod(image_dims) * (image_count + 2)
     working_memory = round(Int, free_memory * memory_fraction, RoundDown)
-    @info string(
-        "Total memory required:  $(memory_needed / 2^20) MiB\n",
-        "Total memory available: $(working_memory / 2^20) MiB"
-    )
     if memory_needed < working_memory
         # Split the image up into chunks equal to the memory size
         (chunksize, remainder) = divrem(last(image_dims), nthreads, RoundNearest)
@@ -108,7 +122,7 @@ function create_blocks(
         ]
         return [StackBlock{T}(undef, r, image_count) for r in regions]
     else
-        
+        _insufficient_memory_error(memory_needed, working_memory, memory_fraction)
     end
 end
 
@@ -122,10 +136,6 @@ function create_blocks(
     image_count = length(images)
     memory_needed = sizeof(T) * prod(image_dims) * (image_count + 1)
     working_memory = round(Int, free_memory * memory_fraction, RoundDown)
-    @info string(
-        "Total memory required:  $(memory_needed / 2^20) MiB\n",
-        "Total memory available: $(working_memory / 2^20) MiB"
-    )
     if memory_needed < working_memory
         # Split the image up into chunks equal to the memory size
         (chunksize, remainder) = divrem(last(image_dims), nthreads, RoundNearest)
@@ -142,6 +152,6 @@ function create_blocks(
         end
         return blocks
     else
-        
+        _insufficient_memory_error(memory_needed, working_memory, memory_fraction)
     end
 end

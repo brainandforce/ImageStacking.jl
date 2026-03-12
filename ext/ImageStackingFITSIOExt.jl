@@ -15,10 +15,6 @@ function ImageStacking.create_blocks(
 ) where T<:Real
     memory_needed = sizeof(T) * prod(image_dims) * (length(filenames) + 1)
     working_memory = round(Int, free_memory * memory_fraction, RoundDown)
-    @info string(
-        "Total memory required:  $(memory_needed / 2^20) MiB\n",
-        "Total memory available: $(working_memory / 2^20) MiB"
-    )
     if memory_needed < working_memory
         # Split the image up into chunks equal to the memory size
         (chunksize, remainder) = divrem(last(image_dims), nthreads, RoundNearest)
@@ -35,7 +31,7 @@ function ImageStacking.create_blocks(
             end
         end
     else
-        
+        ImageStacking._insufficient_memory_error(memory_needed, working_memory, memory_fraction)
     end
     return blocks
 end

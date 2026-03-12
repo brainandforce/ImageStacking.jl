@@ -49,6 +49,13 @@ Base.size(sb::StackBlock) = tuple(size(sb.buffer, 3))
 @propagate_inbounds Base.setindex!(sb::StackBlock, x, i::Int) = (sb.buffer[:,:,i] = x)
 
 """
+    target_axes(sb::StackBlock)
+
+Returns the region of the output image that stacking of this block will write to.
+"""
+target_axes(sb::StackBlock) = sb.region
+
+"""
     ImageStacking.eachframe(sb::StackBlock)
 
 Creates slices of each image in a `StackBlock`.
@@ -64,7 +71,7 @@ Operations that calculate pixel statistics should use this iterator.
 eachpixel(sb::StackBlock) = eachslice(sb.buffer, dims = (1,2))
 
 function Base.summary(io::IO, sb::StackBlock)
-    print(io, typeof(sb), " with ", size(sb.buffer, 3), " images (pixel region ", sb.region, ')')
+    print(io, typeof(sb), " with ", length(sb), " images (pixel region ", target_axes(sb), ')')
 end
 
 #---Break down images into blocks for stacking-----------------------------------------------------#
@@ -130,7 +137,7 @@ function create_blocks(
         Threads.@threads for i in eachindex(images)
             image = images[i]
             for b in blocks
-                b.buffer[:,:,i] .= view(image, b.region...)
+                b.buffer[:,:,i] .= view(image, target_axes(b)...)
             end
         end
         return blocks

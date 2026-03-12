@@ -24,7 +24,7 @@ function stack!(
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
 )
-    for (i,p) in zip(CartesianIndices(block.region), eachpixel(block))
+    for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
         output[i] = pixel_stack!(p, r, coeffs, op)
     end
     return output
@@ -35,7 +35,7 @@ function stack!(
     block::StackBlock,
     r::RejectionMethod
 )
-    for (i,p) in zip(CartesianIndices(block.region), eachpixel(block))
+    for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
         output[i] = pixel_stack!(p, r)
     end
     return output

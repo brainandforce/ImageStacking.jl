@@ -22,5 +22,17 @@ The goal is to build an ecosystem of small interoperating packages that are easi
 This package is intended to be generic with respect to image formats, though users will want to provide linear data in the vast majority of cases.
 The package contains an extension for improved FITS support with [FITSIO.jl].
 
+## Acknowledgements
+
+This work would not be possible without the prior work of the Siril team.
+[Siril] is a free astronomical image processing tool with support for both astrophotographic and scientific workflows, including photometry.
+Special thanks to Cyril Richard [lock042] for answering all my questions about Siril in the Astrobiscuit Discord server.
+
+Further acknowledgements go out to members of the Astrobiscuit and AURIC Discord servers, particularly [RuBoLo][RuBoLo-instagram] and [Browi][Browi-astrobin].
+
 [Drizzle (variable-pixel linear reconstruction)]: https://arxiv.org/abs/astro-ph/9808087
 [FITSIO.jl]: https://github.com/JuliaAstro/FITSIO.jl
+[SIRIL]: https://www.siril.org/
+[lock042]: https://github.com/lock042
+[RuBoLo-instagram]: https://astrobin.com/users/
+[Browi-astrobin]: https://astrobin.com/users/AugustBroe

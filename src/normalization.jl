@@ -1,14 +1,30 @@
 """
-    NormalizationCoefficients{T<:Real}
+    NormalizationCoefficients{T<:Real} <: AbstractVector{Tuple{T,T}}
 
-Stores the offset and scale data from a normalization method.
-The median of the offset and scale are cached
+Stores the location and dispersion data for normalization of images in a stack.
+Additionally, this type includes a choice of reference location and dispersion that are subtracted
+and divided, respectively.
 """
 struct NormalizationCoefficients{T<:Real} <: AbstractVector{Tuple{T,T}}
     data::Vector{Tuple{T,T}}
     centers::Tuple{T,T}
 end
 
+"""
+    NormalizationCoefficients(f, locations::AbstractVector, [dispersions::AbstractVector])
+    NormalizationCoefficients(
+        index::Integer,
+        locations::AbstractVector,
+        [dispersions::AbstractVector]
+    )
+
+Converts `locations` and `dispersions` into a `Tuple` making up a `NormalizationCoefficents` object,
+and acquires the reference location and dispersion by applying a function `f` to both input
+vectors, or using an integer index.
+
+If `dispersions` is not specified, it defaults to `ones(eltype(locations), length(locations))` so
+that no scaling normalization is performed.
+"""
 function NormalizationCoefficients(f, locations::AbstractVector, dispersions::AbstractVector)
     centers = promote(f(locations), f(dispersions))
     T = promote_type(eltype(centers), eltype(locations), eltype(dispersions))

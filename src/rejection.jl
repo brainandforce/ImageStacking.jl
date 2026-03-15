@@ -1,38 +1,43 @@
-#---Rejection methods------------------------------------------------------------------------------#
+#---Stacking methods-------------------------------------------------------------------------------#
 """
-    RejectionMethod
+    StackingMethod
 
-Supertype for all rejection methods used during stacking.
+Supertype for all methods used to stack images.
 
-Subtypes of `RejectionMethod` should include all parameters needed to perform the rejection, such as
-the 
+Subtypes of `StackingMethod` should include all parameters needed to perform the operation,
+such as rejection thresholds, that do not depend on the images being stacked.
 """
-abstract type RejectionMethod
+abstract type StackingMethod
 end
 
 """
-    NoRejection <: RejectionMethod
+    MeanStacking <: StackingMethod
 
-Produces the mean without any outlier rejection
+Produces the mean without any outlier rejection.
+This method is not recommended for real astronomical data, since outliers are common enough to
+seriously affect the final result.
 """
-struct NoRejection <: RejectionMethod
+struct MeanStacking <: StackingMethod
 end
 
 """
-    MedianRejection <: RejectionMethod
+    MedianStacking <: StackingMethod
 
 Produces the median, which is essentially a fully clipped mean.
+This method is not recommended for stacking any more than a few frames, since the median cannot
+significantly increase the precision of the data.
+This leads to posterization, especially in darker areas of astronomical images.
 """
-struct MedianRejection <: RejectionMethod
+struct MedianStacking <: StackingMethod
 end
 
 """
-    AbstractSigmaClipping{T} <: RejectionMethod
+    AbstractSigmaClipping{T} <: StackingMethod
 
 Supertype for methods based on sigma clipping, which iteratively reject outliers lying a given 
 number of standard deviations from the median until none are rejected.
 """
-abstract type AbstractSigmaClipping{T<:Real} <: RejectionMethod
+abstract type AbstractSigmaClipping{T<:Real} <: StackingMethod
 end
 
 reject_low(r::AbstractSigmaClipping) = r.lo
@@ -85,21 +90,21 @@ function WinsorizedSigmaClipping(lo::Real, hi::Real)
 end
 
 """
-    GeneralizedESD{T<:Real} <: RejectionMethod
+    GeneralizedESD{T<:Real} <: StackingMethod
 
 Performs the [generalized extreme Studentized deviate test (GESDT)][Rosner1983] to reject outliers.
 
 [Rosner1983]: https://doi.org/10.1080/00401706.1983.10487848
 """
-struct GeneralizedESD{T<:Real} <: RejectionMethod
+struct GeneralizedESD{T<:Real} <: StackingMethod
     fraction::T
 end
 
 #---Means with rejection---------------------------------------------------------------------------#
 """
-    ImageStacking.pixel_stack!(A!::AbstractVector, r::RejectionMethod) -> PixelStats{T}
+    ImageStacking.pixel_stack!(A!::AbstractVector, s::StackingMethod) -> PixelStats{T}
 
-Stacks the pixel data `A!` using the rejection method `r`, potentially modifying `A!` in place.
+Stacks the pixel data `A!` using the stacking method `s`, potentially modifying `A!` in place.
 This returns a [`PixelStats`](@ref) object, containing the scale and dispersion of the data, along
 with the number of sampled and rejected pixels.
 Note that this function may not modify `A!` depending on the method used (such as calculating a 
@@ -108,13 +113,13 @@ mean without rejection).
 This function should only be called if it is both possible and acceptable to modify the input.
 Otherwise, use [`pixel_stack`](@ref).
 """
-function pixel_stack!(A!::AbstractVector, ::NoRejection)
+function pixel_stack!(A!::AbstractVector, ::MeanStacking)
     m = mean(A!)
     s = stdm(A!, m)
     return PixelStats(m, s, length(A!), 0, 0)
 end
 
-function pixel_stack!(A!::AbstractVector, ::MedianRejection)
+function pixel_stack!(A!::AbstractVector, ::MedianStacking)
     sort!(A!)
     m = mediansorted(A!)
     s = madsorted(A!)
@@ -294,7 +299,7 @@ end
 """
     pixel_stack!(
         A!::AbstractVector,
-        r::RejectionMethod,
+        s::StackingMethod,
         coeffs::NormalizationCoefficients,
         op::Union{typeof(+),typeof(*)}
     ) -> PixelStats{T}
@@ -304,22 +309,22 @@ Performs pixel stacking with normalization, given a set of normalization coeffic
 """
 function pixel_stack!(
     A!::AbstractVector,
-    r::RejectionMethod,
+    s::StackingMethod,
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
 )
-    return pixel_stack!(apply_normalization!(op, A!, coeffs), r)
+    return pixel_stack!(apply_normalization!(op, A!, coeffs), s)
 end
 
 """
-    pixel_stack([::Type{T}], itr, r::RejectionMethod) -> PixelStats{R,T}
+    pixel_stack([::Type{T}], itr, s::StackingMethod) -> PixelStats{R,T}
 
-Stacks pixel data in an iterator `itr` with rejection method `r`.
+Stacks pixel data in an iterator `itr` with stacking method `s`.
 This returns a [`PixelStats`](@ref) object, containing the scale and dispersion of the data, along
 with the number of sampled and rejected pixels.
 
 If it is both possible and non-disruptive to modify the pixel data in place, it may be preferable to
 call [`ImageStacking.pixel_stack!`] instead, which does not allocate a new array.
 """
-pixel_stack(::Type{T}, itr, r::RejectionMethod) where T = pixel_stack!(collect(T, itr), r)
-pixel_stack(itr, r::RejectionMethod) = pixel_stack!(collect(itr), r)
+pixel_stack(::Type{T}, itr, s::StackingMethod) where T = pixel_stack!(collect(T, itr), s)
+pixel_stack(itr, s::StackingMethod) = pixel_stack!(collect(itr), s)

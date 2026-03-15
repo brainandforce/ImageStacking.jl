@@ -3,7 +3,7 @@
     ImageStacking.stack!(
         output::AbstractMatrix,
         block::ImageStacking.StackBlock,
-        r::RejectionMethod,
+        s::RejectionMethod,
         [coeffs::NormalizationCoefficients,]
         [op::Union{typeof(+),typeof(*)}]
     )
@@ -20,12 +20,12 @@ stacked.
 function stack!(
     output::AbstractMatrix,
     block::StackBlock,
-    r::RejectionMethod,
+    s::StackingMethod,
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
 )
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
-        output[i] = pixel_stack!(p, r, coeffs, op)
+        output[i] = pixel_stack!(p, s, coeffs, op)
     end
     return output
 end
@@ -33,10 +33,10 @@ end
 function stack!(
     output::AbstractMatrix,
     block::StackBlock,
-    r::RejectionMethod
+    s::StackingMethod
 )
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
-        output[i] = pixel_stack!(p, r)
+        output[i] = pixel_stack!(p, s)
     end
     return output
 end
@@ -44,13 +44,13 @@ end
 function Base.stack(
     blocks::AbstractVector{StackBlock{T}},
     image_dims::NTuple{2,Integer},
-    r::RejectionMethod,
+    s::StackingMethod,
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
 ) where T
     output = Matrix{PixelStats{T}}(undef, image_dims)
     Threads.@threads for sb in blocks
-        stack!(output, sb, r, coeffs, op)
+        stack!(output, sb, s, coeffs, op)
     end
     return output
 end
@@ -58,18 +58,18 @@ end
 function Base.stack(
     images::ImageSequence{<:AbstractMatrix{T}},
     image_dims::NTuple{2,Integer},
-    r::RejectionMethod,
+    s::StackingMethod,
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
 ) where T
     blocks = create_blocks(images, image_dims)
-    return stack(blocks, image_dims, r, coeffs, op)
+    return stack(blocks, image_dims, s, coeffs, op)
 end
 
 function Base.stack(
     images::ImageSequence{<:AbstractMatrix{T}},
     image_dims::NTuple{2,Integer},
-    r::RejectionMethod,
+    s::StackingMethod,
     e::NormalizationEstimator,
     op::Union{typeof(+),typeof(*)}
 ) where T
@@ -77,5 +77,5 @@ function Base.stack(
     coeffs = get_normalization(median, e, images)
     @info "Stacking images..."
     blocks = create_blocks(images, image_dims)
-    return stack(blocks, image_dims, r, coeffs, op)
+    return stack(blocks, image_dims, s, coeffs, op)
 end

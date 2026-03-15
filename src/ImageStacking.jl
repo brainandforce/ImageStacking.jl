@@ -16,7 +16,7 @@ export get_normalization
 export MedianMADEstimator, IKSSEstimator, LocationOnly, MedianEstimator
 include("rejection.jl")
 export rejections, accepted
-export RejectionMethod, NoRejection, SigmaClipping, MADClipping, WinsorizedSigmaClipping
+export StackingMethod, MeanStacking, SigmaClipping, MADClipping, WinsorizedSigmaClipping
 include("stack.jl")
 
 end

@@ -11,6 +11,47 @@ abstract type StackingMethod
 end
 
 """
+    TrimmedMeanStacking{T} <: StackingMethod
+
+    TrimmedMeanStacking{T}(lo::Real, hi::Real)
+    TrimmedMeanStacking{T}(lohi::Real)
+    TrimmedMeanStacking(lo::Real, hi::Real)
+    TrimmedMeanStacking(lohi::Real)
+
+Produces a trimmed mean, rejecting the lowest and highest quantiles of the data as specified.
+This will always reject outliers, but it may also reject good data, so more selective rejection
+methods are generally recommended.
+
+The standard error of the trimmed mean is calculated from the Winsorized standard deviation (`stdw`)
+with the same rejection fractions, and the number of samples (`n`) [1]:
+
+    stdw / ((1 - (lo + hi)) * sqrt(n))
+
+[1]: https://www.itl.nist.gov/div898/software/dataplot/refman2/auxillar/trimmse.htm
+"""
+struct TrimmedMeanStacking{T<:Real} <: StackingMethod
+    lo::T
+    hi::T
+    function TrimmedMeanStacking{T}(lo::Real, hi::Real) where T<:Real
+        (zero(T) <= lo <= one(T) / 2)|| throw(
+            DomainError(lo ,"rejection fraction must lie between 0 and 1/2 (inclusive)")
+        )
+        (zero(T) <= hi <= one(T) / 2)|| throw(
+            DomainError(hi ,"rejection fraction must lie between 0 and 1/2 (inclusive)")
+        )
+        return new(lo, hi)
+    end
+end
+
+function TrimmedMeanStacking(lo::Real, hi::Real)
+    T = promote_type(typeof(lo),typeof(hi))
+    return TrimmedMeanStacking{T}(lo, hi)
+end
+
+TrimmedMeanStacking{T}(lohi::Real) where T<:Real = TrimmedMeanStacking{T}(lohi, lohi)
+TrimmedMeanStacking(lohi::T) where T<:Real = TrimmedMeanStacking{T}(lohi, lohi)
+
+"""
     MeanStacking <: StackingMethod
 
 Produces the mean without any outlier rejection.

@@ -1,0 +1,10 @@
+[deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+FITSIO = "525bcba6-941b-5504-bd06-fd0dc1a4d2eb"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Aqua = "0.8"
+FITSIO = "0.17"
+julia = "1.10"
+Test = "1"

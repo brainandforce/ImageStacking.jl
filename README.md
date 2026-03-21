@@ -1,5 +1,7 @@
 # ImageStacking.jl
 
+[![Stable][docs-stable-img]][docs-stable-url]
+[![Dev][docs-dev-img]][docs-dev-url]
 [![Build Status][ci-status-img]][ci-status-url]
 [![Aqua.jl][aqua-img]][aqua-url]
 

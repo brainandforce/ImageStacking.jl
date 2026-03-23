@@ -172,6 +172,43 @@ The parameters of the output are:
 ikss(itr; k = 4, tol = eps(Float32)) = ikss!(collect(itr); k, tol)
 
 #---Means with rejection---------------------------------------------------------------------------#
+"""
+    trimmed_mean_weights(T::Type, sz::Integer, lo::Real, hi::Real)
+
+Calculates weights needed for the trimmed mean with trimming fractions `lo` and `hi`, handling cases
+where the size of the dataset `sz` multiplied by either `lo` or `hi` is not an integer.
+"""
+function trimmed_mean_weights(T::Type, sz::Integer, lo::Real, hi::Real)
+    weights = ones(T, sz)
+    # Get weights for the lowest values
+    extent_lo = lo * sz
+    n_discard_lo = floor(Int, extent_lo)
+    weights[begin:n_discard_lo] .= 0
+    weights[n_discard_lo + 1] .= extent_lo - n_discard_lo
+    # Get weights for the highest values
+    extent_hi = hi * sz
+    n_discard_hi = floor(Int, extent_hi)
+    weights[end - n_discard_hi] = extent_hi - n_discard_hi
+    weights[end - n_discard_hi + 1:end] .= 0
+    return weights
+end
+
+# TODO: maybe create a lazy data structure for this?
+
+function trimmed_mean!(data::AbstractVector{T}, lo::Real, hi::Real) where T
+    sort!(data) # TODO: this should probably be a partialsort!
+    weights = trimmed_mean_weights(float(T), length(data), lo, hi)
+    return sum(x*w for (x, w) in zip(weights, data))
+end
+
+trimmed_mean!(data::AbstractVector, lohi::Real) = trimmed_mean!(data, lohi, lohi)
+
+trimmed_mean(data::AbstractVector, lo::Real, hi::Real) = trimmed_mean!(copy(data), lo, hi)
+trimmed_mean(data::AbstractVector, lohi::Real) = trimmed_mean!(copy(data), lohi, lohi)
+
+# NOTE: the code above is probably not good to use in the general case
+# We can just calculate the weight vector once and reuse it constantly
+
 #=
 """
     winsorize_by_sigma!(A!::AbstractVector, l, h)

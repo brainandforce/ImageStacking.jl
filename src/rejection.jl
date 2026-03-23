@@ -322,7 +322,7 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
     while length(inds) > 3
         data = @view A![inds]
         # Track the number of winsorized and sigma clipped samples
-        (m, σ) = winsorize_for_sigma_clip!(data, sorted=true)
+        (m, σ) = winsorize_for_sigma_clip!(copy(data), sorted=true)
         (sl, sh) = sigma_clip!(data, reject_low(r), reject_high(r), m, σ, sorted=true)
         # Winsorized samples aren't considered rejected
         lo += sl

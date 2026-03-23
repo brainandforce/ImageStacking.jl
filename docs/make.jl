@@ -21,6 +21,7 @@ makedocs(;
     pages=[
         "Home" => "index.md"
         "Stacking methods" => "stacking.md"
+        "Normalization" => "normalization.md"
         #= TODO: create more pages
         "API" => Any[
             "Stacking" => "api/stacking.md"

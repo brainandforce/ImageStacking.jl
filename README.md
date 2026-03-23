@@ -31,7 +31,7 @@ The package contains an extension for improved FITS support with [FITSIO.jl].
 
 This work would not be possible without the prior work of the Siril team.
 [Siril] is a free astronomical image processing tool with support for both astrophotographic and scientific workflows, including photometry.
-Special thanks to Cyril Richard [lock042] for answering all my questions about Siril in the Astrobiscuit Discord server.
+Special thanks to Cyril Richard ([lock042]) for answering all my questions about Siril in the Astrobiscuit Discord server.
 
 Further acknowledgements go out to members of the Astrobiscuit and AURIC Discord servers, particularly [RuBoLo][RuBoLo-github] and [August Broe (xBrowi)][Browi-github].
 

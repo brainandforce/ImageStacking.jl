@@ -11,7 +11,7 @@ The arrival of photons on a photosite follows a [Poisson distribution](https://e
 ```
 where ``\lambda`` is the rate parameter (expected number of photons per unit of time), ``k`` is the number of events, and the value of ``\operatorname{Pois}(\lambda, k)`` is the probability of measuring ``k`` events over the unit of time.
 The mean (``\mu``) of ``\operatorname{Pois}(\lambda)``is ``\lambda``, as is its variance (``\sigma^{2}``), so its standard deviation (``\sigma``) is ``\sqrt{\lambda}``.
-With a large enough value of ``\lambda``, we can treat a Poisson distribution as roughly equal to a Gaussian distribution with the same mean and square root.
+With a large enough value of ``\lambda`` (a value above 20 is often suggested), we can treat a Poisson distribution as roughly equal to a Gaussian distribution with mean and standard deviation ``\lambda``.
 
 When we take an image with a modern CMOS sensor, we obtain ADU values that correspond to the photon count, though indirectly.
 Before taking an image, the sensor fills each of the CMOS wells with a pre-determined number of extra photons to prevent any data from clipping to zero.
@@ -111,9 +111,10 @@ This makes it is robust to artifacts that commonly appear in astronomical images
 Analogous to how the variance is the mean of the squared differences of each datum from the mean, the *median absolute deviation* is the median of the absolute differences of each datum from the median:
 ```math
 \begin{aligned}
-\operatorname{mad}\left(X\right) & = \operatorname{median}\left(\left| x_{k} - \operatorname{median}\left(X\right)\right|\right)
+\operatorname{MAD}\left(X\right) & = \operatorname{median}\left(\left| x_{k} - \operatorname{median}\left(X\right)\right|\right)
 \end{aligned}
 ```
+However, like the mean, the noise still decreases proportionally to the square root of the number of frames with median stacking.
 
 It is a bit less effective than the mean at reducing noise: the standard error in the median is approximately
 ```math
@@ -129,6 +130,7 @@ As a result, median stacking is generally not recommended, even for small datase
 ## Rejection stacking
 
 The most useful image stacking methods combine the precision-increasing and noise-reducing properties of the mean with the robustness of the median.
+This is accomplished by either systematically removing or replacing data values that do not meet certain criteria before taking the mean.
 
 ### Trimmed mean
 
@@ -156,12 +158,15 @@ Instead of discarding these values, as in the trimmed mean, the values are repla
 
 ### Sigma clipping
 
-Given trimming parameters ``k_{\text{low}}`` and ``k_{\text{high}}``, this method calculates the median `m` and standard deviation ``\sigma`` of the data, then rejects any data below ``m - k_{\text{low}} \sigma`` and above ``m + k_{\text{high}} \sigma``.
+Given trimming parameters ``k_{\text{low}}`` and ``k_{\text{high}}``, this method calculates the median ``m`` and standard deviation ``\sigma`` of the data, then rejects any data below ``m - k_{\text{low}} \sigma`` and above ``m + k_{\text{high}} \sigma``.
 This process is repeated on the trimmed data until no more points are trimmed.
+
+Sigma clipping is broadly available in both astrophotographic processing software and in scientific workflows.
 
 ### MAD clipping
 
 This method is almost identical to sigma clipping, but uses the median absolute deviation rather than the standard deviation to determine whether to reject points.
+Since the median absolute deviation is more robust, it may be more effective at selecting for outliers.
 
 !!! warning
     The MAD multiples used in this method are **not** scaled to match the standard deviation of a normal distribution.
@@ -173,11 +178,13 @@ This new standard deviation is then used to perform sigma clipping.
 As with sigma clipping, the process is repeated until no more pixels are rejected.
 
 In other implementations of Winsorized sigma clipping, the censorship thresholds ``W_{\text{low}}`` and ``W_{\text{high}}`` are 1.5 standard deviations above and below the median, but they are adjustable in this implementation.
-During each censorship iteration, the Winsorized standard deviation is scaled by a factor of 
+During each censorship iteration, the standard deviation is scaled by a factor of 
 ```math
 2 - \frac{1}{2} \left( \operatorname{erf}\left(\frac{W_{\text{low}}}{\sqrt{2}}\right) + \operatorname{erf}\left(\frac{W_{\text{high}}}{\sqrt{2}}\right) \right)
 ```
-which is approximately `1.13361440253771617` when ``W_{\text{low}} = W_{\text{high}} = 1.5``.
+calculated to be `1.13361440253771617` when ``W_{\text{low}} = W_{\text{high}} = 1.5``.
+
+This method is recommended in Siril and PixInsight documentation for large numbers of frames, and is said to produce better results than sigma clipping alone.
 
 !!! note
     Although this method is known as "Winsorized sigma clipping", the initial step is *not* Winsorization, as it censors the data based on standard deviations instead of using the low and high fractions.

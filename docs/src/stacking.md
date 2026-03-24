@@ -185,5 +185,10 @@ which is approximately `1.13361440253771617` when ``W_{\text{low}} = W_{\text{hi
 
 ### Generalized extreme Studentized deviate test (GESDT)
 
+The *generalized extreme Studentized deviate test* (GESDT) is an extension of [Grubbs's test](https://en.wikipedia.org/wiki/Grubbs%27s_test) which is intended to reject up to a certain number of suspected outliers.
+In this implementation, the test is performed with a maximum fraction of low or high outliers, as the number of images may vary.
+
+The implementation will follow [the NIST description](https://www.itl.nist.gov/div898/handbook/eda/section3/eda35h3.htm) with the above modifications.
+
 !!! todo
     Implement this method...

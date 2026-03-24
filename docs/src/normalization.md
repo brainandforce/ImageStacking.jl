@@ -19,7 +19,19 @@ While more statistically efficient methods are available, they are very computat
 
 ### Biweight midvariance (BWMV)
 
-The *biweight midvariance* (BWMV) is a robust estimator of scale that is more efficient than the MAD.
+The *biweight midvariance* (BWMV) is a robust estimator of scale that is more efficient than the MAD:
+```math
+\begin{aligned}
+\operatorname{BWMV}\left(X\right) & = \frac{\sum_{k = 1}{N} \left( \left(x_{k} - \operatorname{median}\left(X\right) \right) \operatorname{max}\left(1 - u_{k}^{2}, 0\right)^{2} \right)^{2} }{\left(\sum_{k = 1}{N} \operatorname{max}\left(1 - u_{k}^{2}, 0\right)\left(1 - 5u_{k}^{2}\right) \right)^{2}}
+\end{aligned}
+```
+where ``u_{k}`` is defined as:
+```math
+\begin{aligned}
+u_{k} & = \frac{x_k - \operatorname{median}\left(x\right)}{9 \operatorname{MAD}\left(X\right)}
+\end{aligned}
+```
+For a normal distribution, the biweight midvariance is approximately `0.9909048195090278` times the standard deviation, as calculated by numerical integration.
 
 ### IKSS estimator
 

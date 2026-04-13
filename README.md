@@ -1,4 +1,4 @@
-# ImageStacking.jl
+# [ImageStacking.jl][repo-url]
 
 [![Stable][docs-stable-img]][docs-stable-url]
 [![Dev][docs-dev-img]][docs-dev-url]
@@ -33,15 +33,15 @@ This work would not be possible without the prior work of the Siril team.
 [Siril] is a free astronomical image processing tool with support for both astrophotographic and scientific workflows, including photometry.
 Special thanks to Cyril Richard ([lock042]) for answering all my questions about Siril in the Astrobiscuit Discord server.
 
-Further acknowledgements go out to members of the Astrobiscuit and AURIC Discord servers, particularly [RuBoLo][RuBoLo-github] and [August Broe (xBrowi)][Browi-github].
+Further acknowledgements go out to members of the Astrobiscuit and AURIC Discord servers, particularly [Stefano DeAngelis (RuBoLo)][RuBoLo-github] and [August Broe (xBrowi)][Browi-github].
 
-[repo-url]:         https://github.com/brainandforce/ImageStacking.jl
+[repo-url]:         https://github.com/esitohi/ImageStacking.jl
 [docs-stable-img]:  https://img.shields.io/badge/docs-stable-blue.svg
-[docs-stable-url]:  https://brainandforce.github.io/ImageStacking.jl/stable
+[docs-stable-url]:  https://esitohi.github.io/ImageStacking.jl/stable
 [docs-dev-img]:     https://img.shields.io/badge/docs-dev-blue.svg
-[docs-dev-url]:     https://brainandforce.github.io/ImageStacking.jl/dev
-[ci-status-img]:    https://github.com/brainandforce/ImageStacking.jl/workflows/CI/badge.svg
-[ci-status-url]:    https://github.com/brainandforce/ImageStacking.jl/actions
+[docs-dev-url]:     https://esitohi.github.io/ImageStacking.jl/dev
+[ci-status-img]:    https://github.com/esitohi/ImageStacking.jl/workflows/CI/badge.svg
+[ci-status-url]:    https://github.com/esitohi/ImageStacking.jl/actions
 [aqua-img]:         https://raw.githubusercontent.com/JuliaTesting/Aqua.jl/master/badge.svg
 [aqua-url]:         https://github.com/JuliaTesting/Aqua.jl
 [codecov-img]:      https://codecov.io/gh/brainandforce/ImageStacking.jl/branch/main/graph/badge.svg

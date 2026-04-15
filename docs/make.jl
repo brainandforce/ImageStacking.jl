@@ -14,7 +14,7 @@ makedocs(;
     checkdocs = :exports,
     format=Documenter.HTML(;
         prettyurls = is_ci_env,
-        canonical = "https://brainandforce.github.io/ImageStacking.jl",
+        canonical = "https://esitohi.github.io/ImageStacking.jl",
         edit_link = "main",
         assets = String[],
     ),
@@ -31,6 +31,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/brainandforce/ImageStacking.jl.git",
+    repo="github.com/esitohi/ImageStacking.jl.git",
     devbranch="main",
 )

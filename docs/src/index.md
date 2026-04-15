@@ -1,9 +1,9 @@
 ```@meta
 CurrentModule = ImageStacking
 ```
-# ImageStacking.jl
+# [ImageStacking.jl](https://github.com/esitohi/ImageStacking.jl)
 
-[ImageStacking.jl](https://github.com/esitohi/ImageStacking.jl) provides utilities for stacking raw images.
+ImageStacking.jl provides utilities for stacking raw images.
 This is an key operation in astronomical imaging, and there are many different ways to go about it depending on the imager's goals.
 
 While there are many programs, free and proprietary, that can stack raw images, ImageStacking.jl has three major goals for providing unique functionality:

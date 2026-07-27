@@ -20,6 +20,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md"
+        "Usage" => "usage.md"
         "Stacking methods" => "stacking.md"
         "Normalization" => "normalization.md"
         #= TODO: create more pages

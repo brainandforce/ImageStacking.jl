@@ -120,7 +120,7 @@ bwmv(itr) = bwmvm(itr, median(itr))
 
 #---Iterative k-sigma estimation-------------------------------------------------------------------#
 """
-    ikss!(A, k = 4, tol = eps(Float32)) -> Tuple{Real, Real, Int, Int}
+    ikss!(A, k = 4, tol = sqrt(eps(Float32))) -> Tuple{Real, Real, Int, Int}
 
 Performs iterative k-sigma estimation of location and scale (IKSS) on an array `A`, which is
 modified in-place.
@@ -132,7 +132,7 @@ The parameters of the output are:
 * count of pixels not rejected
 * number of iterations performed
 """
-function ikss!(A::AbstractVector; k = 4, tol = eps(Float32))
+function ikss!(A::AbstractVector; k = 4, tol = sqrt(eps(Float32)))
     P = sort!(A)
     i,j = (firstindex(P), lastindex(P))
     # For type stability
@@ -155,10 +155,10 @@ function ikss!(A::AbstractVector; k = 4, tol = eps(Float32))
     end
 end
 
-ikss!(A::AbstractArray; k = 4, tol = eps(Float32)) = ikss!(vec(A); k, tol)
+ikss!(A::AbstractArray; k = 4, tol = sqrt(eps(Float32))) = ikss!(vec(A); k, tol)
 
 """
-    ikss(itr, k = 4, tol = eps(Float32)) -> Tuple{Real, Real, Int, Int}
+    ikss(itr, k = 4, tol = sqrt(eps(Float32))) -> Tuple{Real, Real, Int, Int}
 
 Performs iterative k-sigma estimation of location and scale (IKSS).
 This estimator is used for image normalization and scaling.
@@ -169,7 +169,7 @@ The parameters of the output are:
 * count of pixels not rejected
 * number of iterations performed
 """
-ikss(itr; k = 4, tol = eps(Float32)) = ikss!(collect(itr); k, tol)
+ikss(itr; k = 4, tol = sqrt(eps(Float32))) = ikss!(collect(itr); k, tol)
 
 #---Means with rejection---------------------------------------------------------------------------#
 """

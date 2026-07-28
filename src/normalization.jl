@@ -89,7 +89,9 @@ Iterative k-sigma estimator of location and scale.
 struct IKSSEstimator{T} <: NormalizationEstimator{T}
 end
 
-(::IKSSEstimator{T})(pixels; k = 4, tol = eps(Float32)) where T = convert.(T, ikss(pixels; k, tol))
+function (::IKSSEstimator{T})(pixels; k = 4, tol = sqrt(eps(Float32))) where T
+    convert.(T, ikss(pixels; k, tol))
+end
 
 struct LocationOnly{T,E<:NormalizationEstimator{T}} <: NormalizationEstimator{T}
 end

@@ -19,13 +19,15 @@ stacked.
 """
 function stack!(
     output::AbstractMatrix,
-    block::StackBlock,
+    block::StackBlock{T},
     s::StackingMethod,
     coeffs::NormalizationCoefficients,
     op::Union{typeof(+),typeof(*)}
-)
+) where T
+    cache = zeros(T, length(block))
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
-        output[i] = pixel_stack!(p, s, coeffs, op)
+        copyto!(cache, p)
+        output[i] = pixel_stack!(cache, s, coeffs, op)
     end
     return output
 end
@@ -35,8 +37,10 @@ function stack!(
     block::StackBlock,
     s::StackingMethod
 )
+    cache = zeros(T, length(block))
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
-        output[i] = pixel_stack!(p, s)
+        copyto!(cache, p)
+        output[i] = pixel_stack!(cache, s)
     end
     return output
 end

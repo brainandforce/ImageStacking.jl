@@ -289,40 +289,51 @@ end
 
 Performs iterative Winsorization of the input data with respect to its median and standard
 deviation, sorting and modifying it in-place.
+
+If `sorted` is true, the function will not modify the input array.
 """
 function winsorize_for_sigma_clip!(
     A!::AbstractVector;
     tol = 0.0005,
     s_low = 3//2,
     s_high = 3//2,
-    sorted::Bool = false
+    sorted::Bool = false,
+    # This is where the factor of 1.134 comes in in other implementations
+    # if supplied by an external function, this should be faster
+    std_factor = 2 - (erf(s_low / sqrt(2)) + erf(s_high / sqrt(2))) / 2
 )
     l = length(A!)
     sorted || sort!(A!)
     m = mediansorted(A!)
     s = std(A!)
     s0 = zero(s)
-    # This is where the factor of 1.134 comes in in other implementations
-    std_factor = 2 - (erf(s_low / sqrt(2)) + erf(s_high / sqrt(2))) / 2
     while ((abs(s - s0) / s0) > tol) #=&& (num_rejections > 0) && (l - (lo + hi) > 3)=#
         num_winsorized = winsorize!(A!, m, s, s_low, s_high, sorted=true)
         num_winsorized > 0 || break
         m = mediansorted(A!)
         s0 = s
-        s = std(A!) * std_factor
+        s = std(A!) * oftype(s, std_factor)
     end
     return (m, s)
 end
 
 function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
-    # Perform iterative winsorization and sigma clipping until no more changes occur
-    sort!(A!)
+    #=
+        Sorting is by far the biggest bottleneck in this stacking method.
+        Forcing an in-place radix sort did not help, so allocations aren't the issue.
+        Probably the best solution is to partial sort
+    =#
+    sort!(A!, #=alg=Base.Sort.InsertionSort=#)
     (lo, hi) = (0, 0)   # number of low/high pixels rejected
-    inds = eachindex(A!)
+    inds = eachindex(A!)    # TODO: resolve this performance hit
+    # Factors for the Winsorization step
+    # TODO: allow them to be adjusted by the user
+    s_low = s_high = 3/2
+    std_factor = 2 - (erf(s_low / sqrt(2)) + erf(s_high / sqrt(2))) / 2
     while length(inds) > 3
-        data = @view A![inds]
+        data = @view A![inds]   # 1 allocation
         # Track the number of winsorized and sigma clipped samples
-        (m, σ) = winsorize_for_sigma_clip!(copy(data), sorted=true)
+        (m, σ) = winsorize_for_sigma_clip!(data, sorted=true, std_factor = std_factor)
         (sl, sh) = sigma_clip!(data, reject_low(r), reject_high(r), m, σ, sorted=true)
         # Winsorized samples aren't considered rejected
         lo += sl
@@ -331,7 +342,7 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
         inds = (first(inds) + sl):(last(inds) - sh)
         inds_old == inds && break
     end
-    data = @view A![inds]
+    data = @view A![inds]   # 1 allocation
     m = mean(data)
     s = stdm(data, m)
     return PixelStats(m, s, length(A!), lo, hi)

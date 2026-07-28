@@ -325,7 +325,9 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
     =#
     sort!(A!, #=alg=Base.Sort.InsertionSort=#)
     (lo, hi) = (0, 0)   # number of low/high pixels rejected
-    inds = eachindex(A!)    # TODO: resolve this performance hit
+    # If we use eachindex(A!), we get a Base.OneTo object
+    # But we need a UnitRange because it will be modified
+    inds = UnitRange(eachindex(A!))
     # Factors for the Winsorization step
     # TODO: allow them to be adjusted by the user
     s_low = s_high = 3/2
@@ -342,7 +344,7 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
         inds = (first(inds) + sl):(last(inds) - sh)
         inds_old == inds && break
     end
-    data = @view A![inds]   # 1 allocation
+    data = @view A![inds]
     m = mean(data)
     s = stdm(data, m)
     return PixelStats(m, s, length(A!), lo, hi)

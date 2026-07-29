@@ -57,7 +57,7 @@ When stacking light frames, we want to apply additive normalization with scaling
 For flat frames, we only want to apply multiplicative normalization without scaling, so our final argument should be `*`, and we should wrap our estimator type in `LocationOnly` to omit the scaling correction.
 For lights, the stacking call should look like this:
 ```julia-repl
-julia> result = stack(images, image_dims, WinsorizedSigmaClipping(3,3), IKSSEstimator{Float32}(), +)
+julia> result = stack(images, image_dims, WinsorizedSigmaClipping(3,3), IKSSEstimator(), +)
 ```
 The result contains much more information than the pixel values: the `PixelStats` data type also includes dispersion data (standard deviation), the number of pixels in the sample (which may be nonzero due to dithering around the edges), and the number of low and high rejections.
 To extract the stacked image, use a list comprehension:

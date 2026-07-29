@@ -59,21 +59,22 @@ Base.size(c::NormalizationCoefficients) = size(c.data)
 end
 
 """
-    NormalizationEstimator{T}
+    NormalizationEstimator
 
-Represents a method of calculating the location and dispersion of an image, with both results
-represented as type `T`.
+Represents a method of calculating the location and dispersion of an image in order to performed
+normalization of all images in a sequence.
+
 To apply a normalization estimator, call an instance of it as a function.
 """
-abstract type NormalizationEstimator{T}
+abstract type NormalizationEstimator
 end
 
 """
-    MedianMADEstimator{T} <: NormalizationEstimator{T}
+    MedianMADEstimator <: NormalizationEstimator
 
 Calculates location with the median and scale with the median absolute deviation (MAD).
 """
-struct MedianMADEstimator{T} <: NormalizationEstimator{T}
+struct MedianMADEstimator <: NormalizationEstimator
 end
 
 function (::MedianMADEstimator)(pixels)
@@ -82,32 +83,34 @@ function (::MedianMADEstimator)(pixels)
 end
 
 """
-    IKSSEstimator{T} <: NormalizationEstimator{T}
+    IKSSEstimator <: NormalizationEstimator
 
 Iterative k-sigma estimator of location and scale.
 """
-struct IKSSEstimator{T} <: NormalizationEstimator{T}
+struct IKSSEstimator <: NormalizationEstimator
 end
 
-function (::IKSSEstimator{T})(pixels; k = 4, tol = sqrt(eps(Float32))) where T
-    convert.(T, ikss(pixels; k, tol))
+function (::IKSSEstimator)(pixels; k = 4, tol = sqrt(eps(Float32)))
+    return ikss(pixels; k, tol)
 end
 
-struct LocationOnly{T,E<:NormalizationEstimator{T}} <: NormalizationEstimator{T}
+struct LocationOnly{E<:NormalizationEstimator} <: NormalizationEstimator
 end
 
-function (::LocationOnly{E,T})(pixels; kwargs...) where {E,T}
-    return (convert(T, first(E()(pixels; kwargs...))), one(T))
+function (::LocationOnly{E})(pixels; kwargs...) where E
+    x = first(E()(pixels; kwargs...))
+    return (x, one(x))
 end
 
-const MedianEstimator{T} = LocationOnly{MedianMADEstimator{T},T}
+const MedianEstimator = LocationOnly{MedianMADEstimator}
 
-(::MedianEstimator{T})(pixels) where T = (convert(T, median(pixels)), one(T))
+(::MedianEstimator)(pixels) = (m = median(pixels); return (m, one(m)))
 
 #---Get normalization coefficients for an image sequence-------------------------------------------#
 """
-    get_normalization(f, e::NormalizationEstimator{T}, images) -> NormalizationCoefficents{T}
-    get_normalization(i::Integer, e::NormalizationEstimator{T}, images)
+    get_normalization(f, [T::Type = Float32], e::NormalizationEstimator, images)
+    get_normalization(i::Integer, [T::Type = Float32], e::NormalizationEstimator, images)
+        -> NormalizationCoefficents{T}
 
 Calculates normalization coefficients for a sequence of images.
 The normalizations may be provided with reference to a central estimate of the location and
@@ -117,7 +120,7 @@ Because normalization can take a long time for each image depending on the metho
 function is multithreaded and will use all available threads to compute the normalization of a
 sequence.
 """
-function get_normalization(f, e::NormalizationEstimator{T}, images) where T
+function get_normalization(f, ::Type{T}, e::NormalizationEstimator, images) where T
     ld = Vector{Tuple{T,T}}(undef, length(images))
     Threads.@threads for i in eachindex(images)
         ld[i] = e(images[i])
@@ -125,12 +128,16 @@ function get_normalization(f, e::NormalizationEstimator{T}, images) where T
     return NormalizationCoefficients{T}(ld, (f(first.(ld)), f(last.(ld))))
 end
 
-function get_normalization(i::Integer, e::NormalizationEstimator{T}, images) where T
+function get_normalization(i::Integer, ::Type{T}, e::NormalizationEstimator, images) where T
     ld = Vector{Tuple{T,T}}(undef, length(images))
-    Threads.@threads for i in eachindex(images)
-        ld[i] = e(images[i])
+    Threads.@threads for j in eachindex(images)
+        ld[j] = e(images[j])
     end
     return NormalizationCoefficients{T}(ld, (first.(ld[i]), last(ld[i])))
+end
+
+function get_normalization(predicate, e::NormalizationEstimator, images)
+    return get_normalization(predicate, Float32, e, images)
 end
 
 #---Perform normalization on entire image sequences------------------------------------------------#

@@ -167,7 +167,7 @@ end
 function apply_normalization!(
     ::typeof(*),
     pixel!::AbstractVector,
-    ndata::AbstractVector{<:NormalizationCoefficients}
+    coeffs::AbstractVector{<:NormalizationCoefficients}
 )
     (l0, d0) = coeffs.centers
     for i in eachindex(pixel!)

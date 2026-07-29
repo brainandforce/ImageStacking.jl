@@ -34,6 +34,8 @@ function stack!(
 ) where T
     cache = zeros(T, length(block))
     flags = falses(length(cache))
+    # TODO: don't use @inbounds annotations here yet, but do in the future
+    # This will cause serious problems if the images are all different sizes
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
         copyto!(cache, p)
         output[i] = pixel_stack!(cache, s, coeffs, op, flags; skipnan, skipzero)

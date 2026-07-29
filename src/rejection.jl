@@ -333,7 +333,7 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
     s_low = s_high = 3/2
     std_factor = 2 - (erf(s_low / sqrt(2)) + erf(s_high / sqrt(2))) / 2
     while length(inds) > 3
-        data = @view A![inds]   # 1 allocation
+        data = @inbounds view(A!, inds)
         # Track the number of winsorized and sigma clipped samples
         (m, σ) = winsorize_for_sigma_clip!(data, sorted=true, std_factor = std_factor)
         (sl, sh) = sigma_clip!(data, reject_low(r), reject_high(r), m, σ, sorted=true)
@@ -344,7 +344,7 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
         inds = (first(inds) + sl):(last(inds) - sh)
         inds_old == inds && break
     end
-    data = @view A![inds]
+    data = @inbounds view(A!, inds)
     m = mean(data)
     s = stdm(data, m)
     return PixelStats(m, s, length(A!), lo, hi)
@@ -436,7 +436,8 @@ function pixel_stack!(
     end
     apply_normalization!(op, A!, coeffs)
     limit = move_skipped_elements!(A!, flags!)
-    return pixel_stack!(view(A!, firstindex(A!):limit), s)
+    v = @inbounds view(A!, firstindex(A!):limit)
+    return pixel_stack!(v, s)
 end
 
 """

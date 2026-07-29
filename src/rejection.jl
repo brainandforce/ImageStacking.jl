@@ -351,23 +351,92 @@ function pixel_stack!(A!::AbstractVector, r::WinsorizedSigmaClipping)
 end
 
 """
+    move_skipped_elements!(predicate, A!::AbstractVector)
+
+Moves elements that satisfy the supplied predicate to the end of the vector, returning the last
+index which contains elements not satisfying the predicate.
+"""
+function move_skipped_elements!(predicate, A!::AbstractVector)
+    limit = lastindex(A!)
+    i = 1
+    while i < limit
+        x = A![i]
+        if predicate(x)
+            while predicate(A![limit]) && i < limit
+                limit -= 1
+            end
+            if i < limit
+                A![i] = A![limit]
+                A![limit] = x
+            end
+            limit -= 1
+        end
+        i += 1
+    end
+    return limit
+end
+
+"""
+    move_skipped_elements!(A!::AbstractVector, flags::AbstractVector{Bool})
+
+Moves elements that satisfy the supplied predicate to the end of the vector, returning the last
+index which contains elements not satisfying the predicate.
+"""
+function move_skipped_elements!(A!::AbstractVector, flags::AbstractVector{Bool})
+    limit = lastindex(A!)
+    i = 1
+    while i < limit
+        x = A![i]
+        if flags[i]
+            while flags[limit] && i < limit
+                limit -= 1
+            end
+            if i < limit
+                A![i] = A![limit]
+                A![limit] = x
+            end
+            limit -= 1
+        end
+        i += 1
+    end
+    return limit
+end
+
+"""
     pixel_stack!(
         A!::AbstractVector,
         s::StackingMethod,
         coeffs::NormalizationCoefficients,
-        op::Union{typeof(+),typeof(*)}
+        op::Union{typeof(+),typeof(*)},
+        flags!::AbstractVector{Bool} = falses(length(A!));
+        skipnan = true,
+        skipzero = false
     ) -> PixelStats{T}
 
 Performs pixel stacking with normalization, given a set of normalization coefficients and either the
 `+` or `*` operator depending on whether additive or multiplicative normalization is desired.
+
+The `flags!` argument is a set of boolean values which determine whether a particular value should
+be skipped.
+If this function is only called on a single set of values, it does not need to be provided.
+However, if this function is called in a loop, it is a good idea to preallocate the `flags!`
+argument for higher performance.
 """
 function pixel_stack!(
     A!::AbstractVector,
     s::StackingMethod,
     coeffs::NormalizationCoefficients,
-    op::Union{typeof(+),typeof(*)}
+    op::Union{typeof(+),typeof(*)},
+    flags!::AbstractVector{Bool} = falses(length(A!));
+    skipnan = true,
+    skipzero = false
 )
-    return pixel_stack!(apply_normalization!(op, A!, coeffs), s)
+    for i in eachindex(flags!)
+        flags![i] = (skipnan && isnan(A![i])) || (skipzero && iszero(A![i]))
+    end
+    apply_normalization!(op, A!, coeffs)
+    limit = move_skipped_elements!(A!, flags!)
+    return pixel_stack!(view(A!, firstindex(A!):limit), s)
 end
 
 """

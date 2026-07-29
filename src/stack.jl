@@ -5,7 +5,9 @@
         block::ImageStacking.StackBlock,
         s::RejectionMethod,
         [coeffs::NormalizationCoefficients,]
-        [op::Union{typeof(+),typeof(*)}]
+        [op::Union{typeof(+),typeof(*)}];
+        skipnan = true,
+        skipzero = false
     )
 
 Stacks the data in `block` and writes the results to `output`.
@@ -16,18 +18,28 @@ Data in `block` may be modified depending on the choice of rejection method.
 If normalization coefficients and a choice of normalization method (either `+` for additive or `*`
 for multiplicative) are provided, then normalization will be applied to the images before they are
 stacked.
+
+The option to skip `NaN` and zero values is also provided with the options `skipnan` and `skipzero`.
+By default, `NaN` is skipped, but zeros are not.
+For those wishing to replicate Siril's stacking, set `skipzero` to true.
 """
 function stack!(
     output::AbstractMatrix,
     block::StackBlock{T},
     s::StackingMethod,
     coeffs::NormalizationCoefficients,
-    op::Union{typeof(+),typeof(*)}
+    op::Union{typeof(+),typeof(*)};
+    skipnan = true,
+    skipzero = false
 ) where T
     cache = zeros(T, length(block))
+    flags = falses(length(cache))
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
         copyto!(cache, p)
-        output[i] = pixel_stack!(cache, s, coeffs, op)
+        output[i] = pixel_stack!(cache, s, coeffs, op, flags; skipnan, skipzero)
+        for j in eachindex(flags)
+            flags[j] = false
+        end
     end
     return output
 end
@@ -35,12 +47,14 @@ end
 function stack!(
     output::AbstractMatrix,
     block::StackBlock,
-    s::StackingMethod
+    s::StackingMethod;
+    skipnan = true,
+    skipzero = false
 )
     cache = zeros(T, length(block))
     for (i,p) in zip(CartesianIndices(target_axes(block)), eachpixel(block))
         copyto!(cache, p)
-        output[i] = pixel_stack!(cache, s)
+        output[i] = pixel_stack!(cache, s, coeffs, op; skipnan, skipzero)
     end
     return output
 end
@@ -50,11 +64,13 @@ function Base.stack(
     image_dims::NTuple{2,Integer},
     s::StackingMethod,
     coeffs::NormalizationCoefficients,
-    op::Union{typeof(+),typeof(*)}
+    op::Union{typeof(+),typeof(*)};
+    skipnan = true,
+    skipzero = false
 ) where T
     output = Matrix{PixelStats{T}}(undef, image_dims)
     Threads.@threads for sb in blocks
-        stack!(output, sb, s, coeffs, op)
+        stack!(output, sb, s, coeffs, op; skipnan, skipzero)
     end
     return output
 end
@@ -64,10 +80,12 @@ function Base.stack(
     image_dims::NTuple{2,Integer},
     s::StackingMethod,
     coeffs::NormalizationCoefficients,
-    op::Union{typeof(+),typeof(*)}
+    op::Union{typeof(+),typeof(*)};
+    skipnan = true,
+    skipzero = false
 ) where T
     blocks = create_blocks(images, image_dims)
-    return stack(blocks, image_dims, s, coeffs, op)
+    return stack(blocks, image_dims, s, coeffs, op; skipnan, skipzero)
 end
 
 function Base.stack(
@@ -75,11 +93,13 @@ function Base.stack(
     image_dims::NTuple{2,Integer},
     s::StackingMethod,
     e::NormalizationEstimator,
-    op::Union{typeof(+),typeof(*)}
+    op::Union{typeof(+),typeof(*)};
+    skipnan = true,
+    skipzero = false
 ) where T
     @info "Calculating normalization..."
     coeffs = get_normalization(median, e, images)
     @info "Stacking images..."
     blocks = create_blocks(images, image_dims)
-    return stack(blocks, image_dims, s, coeffs, op)
+    return stack(blocks, image_dims, s, coeffs, op; skipnan, skipzero)
 end
